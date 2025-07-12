@@ -6,7 +6,7 @@ const About = () => {
       <div className='mb-6 sm:mb-8'>
         <h1 className='text-xl sm:text-2xl font-bold text-gray-800 mb-2 flex items-center gap-2'>
           <HelpCircle className='text-blue-600' />
-          How to Use Risk Manager
+          How to Use Trade Risk Manager
         </h1>
         <p className='text-gray-600'>
           Complete guide to using this risk management calculator effectively

@@ -1,3 +1,6 @@
+import { handleNumericInput } from '../utils/helpers'
+import { DEFAULTS, RISK_CONSTANTS } from '../utils/constants'
+
 export const SettingsPanel = ({ calculations, onSettingsChange }) => {
   const {
     activeModel,
@@ -8,7 +11,6 @@ export const SettingsPanel = ({ calculations, onSettingsChange }) => {
     riskReduction2,
     totalAmount,
     currentLoss,
-    getNumericValue,
   } = calculations
 
   return (
@@ -58,12 +60,13 @@ export const SettingsPanel = ({ calculations, onSettingsChange }) => {
                 : lossTrigger
             }
             onChange={(e) =>
-              onSettingsChange(
-                'lossTrigger',
-                e.target.value === '' ? null : Number(e.target.value)
+              handleNumericInput(
+                e.target.value,
+                (value) => onSettingsChange('lossTrigger', value),
+                { min: 1, max: 10 }
               )
             }
-            placeholder='3'
+            placeholder={RISK_CONSTANTS.DEFAULT_LOSS_TRIGGER.toString()}
             className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
             min='1'
             max='10'
@@ -86,12 +89,13 @@ export const SettingsPanel = ({ calculations, onSettingsChange }) => {
                     : firstThreshold
                 }
                 onChange={(e) =>
-                  onSettingsChange(
-                    'firstThreshold',
-                    e.target.value === '' ? null : Number(e.target.value)
+                  handleNumericInput(
+                    e.target.value,
+                    (value) => onSettingsChange('firstThreshold', value),
+                    { min: 1, max: 99 }
                   )
                 }
-                placeholder='30'
+                placeholder={RISK_CONSTANTS.DEFAULT_FIRST_THRESHOLD.toString()}
                 className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
                 min='1'
                 max='99'
@@ -109,12 +113,13 @@ export const SettingsPanel = ({ calculations, onSettingsChange }) => {
                     : riskReduction1
                 }
                 onChange={(e) =>
-                  onSettingsChange(
-                    'riskReduction1',
-                    e.target.value === '' ? null : Number(e.target.value)
+                  handleNumericInput(
+                    e.target.value,
+                    (value) => onSettingsChange('riskReduction1', value),
+                    { min: 1, max: 100 }
                   )
                 }
-                placeholder='70'
+                placeholder={RISK_CONSTANTS.DEFAULT_RISK_REDUCTION_1.toString()}
                 className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
                 min='1'
                 max='100'
@@ -134,12 +139,13 @@ export const SettingsPanel = ({ calculations, onSettingsChange }) => {
                     : secondThreshold
                 }
                 onChange={(e) =>
-                  onSettingsChange(
-                    'secondThreshold',
-                    e.target.value === '' ? null : Number(e.target.value)
+                  handleNumericInput(
+                    e.target.value,
+                    (value) => onSettingsChange('secondThreshold', value),
+                    { min: 1, max: 99 }
                   )
                 }
-                placeholder='60'
+                placeholder={RISK_CONSTANTS.DEFAULT_SECOND_THRESHOLD.toString()}
                 className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
                 min='1'
                 max='99'
@@ -157,12 +163,13 @@ export const SettingsPanel = ({ calculations, onSettingsChange }) => {
                     : riskReduction2
                 }
                 onChange={(e) =>
-                  onSettingsChange(
-                    'riskReduction2',
-                    e.target.value === '' ? null : Number(e.target.value)
+                  handleNumericInput(
+                    e.target.value,
+                    (value) => onSettingsChange('riskReduction2', value),
+                    { min: 1, max: 100 }
                   )
                 }
-                placeholder='50'
+                placeholder={RISK_CONSTANTS.DEFAULT_RISK_REDUCTION_2.toString()}
                 className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
                 min='1'
                 max='100'
@@ -183,12 +190,13 @@ export const SettingsPanel = ({ calculations, onSettingsChange }) => {
             totalAmount === null || totalAmount === undefined ? '' : totalAmount
           }
           onChange={(e) =>
-            onSettingsChange(
-              'totalAmount',
-              e.target.value === '' ? null : Number(e.target.value)
+            handleNumericInput(
+              e.target.value,
+              (value) => onSettingsChange('totalAmount', value),
+              { min: 1 }
             )
           }
-          placeholder='100'
+          placeholder={DEFAULTS.TOTAL_AMOUNT.toString()}
           className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
           min='1'
         />
@@ -208,16 +216,14 @@ export const SettingsPanel = ({ calculations, onSettingsChange }) => {
           value={
             currentLoss === null || currentLoss === undefined ? '' : currentLoss
           }
-          onChange={(e) => {
-            const val = e.target.value
-            const numVal = val === '' ? null : Number(val)
-            const maxVal = getNumericValue(totalAmount, 100)
-            onSettingsChange(
-              'currentLoss',
-              numVal !== null ? Math.min(Math.max(0, numVal), maxVal) : null
+          onChange={(e) =>
+            handleNumericInput(
+              e.target.value,
+              (value) => onSettingsChange('currentLoss', value),
+              { min: 0 }
             )
-          }}
-          placeholder='0'
+          }
+          placeholder={DEFAULTS.CURRENT_LOSS.toString()}
           className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
           min='0'
         />

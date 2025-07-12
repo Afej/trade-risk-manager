@@ -6,47 +6,24 @@ import {
   AlertTriangle,
   AlertCircle,
 } from 'lucide-react'
+import { calculateDailyLossMetrics } from '../utils/calculations'
+import { handleNumericInput, formatCurrency } from '../utils/helpers'
+import { DEFAULTS, DAILY_LOSS_CONSTANTS } from '../utils/constants'
 
 const DailyLoss = () => {
-  const [accountBalance, setAccountBalance] = useState(10000)
-  const [dailyLossLimit, setDailyLossLimit] = useState(4)
-  const [currentDailyLoss, setCurrentDailyLoss] = useState(0)
+  const [accountBalance, setAccountBalance] = useState(DEFAULTS.ACCOUNT_BALANCE)
+  const [dailyLossLimit, setDailyLossLimit] = useState(
+    DEFAULTS.DAILY_LOSS_LIMIT
+  )
+  const [currentDailyLoss, setCurrentDailyLoss] = useState(
+    DEFAULTS.CURRENT_LOSS
+  )
 
-  const getNumericValue = (value, defaultVal = 1, min = 0) => {
-    if (value === null || value === undefined || value === '') return defaultVal
-    const num = Number(value)
-    return isNaN(num) ? defaultVal : Math.max(min, num)
-  }
-
-  const calculateDailyLoss = () => {
-    const accountBalanceValue = getNumericValue(accountBalance, 10000, 1)
-    const dailyLossLimitValue = getNumericValue(dailyLossLimit, 4, 0.1)
-    const currentDailyLossValue = getNumericValue(currentDailyLoss, 0, 0)
-
-    const dailyLossAmount = (accountBalanceValue * dailyLossLimitValue) / 100
-    const remainingDailyLimit = Math.max(
-      0,
-      dailyLossAmount - currentDailyLossValue
-    )
-    const initialRisk = accountBalanceValue / 100 // Assuming 1% per trade
-    const maxTradesPerDay = Math.floor(dailyLossAmount / initialRisk)
-    const remainingTrades = Math.floor(remainingDailyLimit / initialRisk)
-    const usedPercentage = (
-      (currentDailyLossValue / dailyLossAmount) *
-      100
-    ).toFixed(1)
-
-    return {
-      dailyLossAmount,
-      remainingDailyLimit,
-      maxTradesPerDay,
-      remainingTrades,
-      usedPercentage,
-      shouldStop: currentDailyLossValue >= dailyLossAmount * 0.5,
-    }
-  }
-
-  const dailyCalc = calculateDailyLoss()
+  const dailyCalc = calculateDailyLossMetrics({
+    accountBalance,
+    dailyLossLimit,
+    currentDailyLoss,
+  })
 
   return (
     <div className='max-w-6xl mx-auto p-3 sm:p-6'>
@@ -78,11 +55,12 @@ const DailyLoss = () => {
                   ? ''
                   : accountBalance
               }
-              onChange={(e) => {
-                const val = e.target.value
-                setAccountBalance(val === '' ? null : Number(val))
-              }}
-              placeholder='10000'
+              onChange={(e) =>
+                handleNumericInput(e.target.value, setAccountBalance, {
+                  min: 1,
+                })
+              }
+              placeholder={DEFAULTS.ACCOUNT_BALANCE.toString()}
               className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
               min='1'
             />
@@ -98,11 +76,13 @@ const DailyLoss = () => {
                   ? ''
                   : dailyLossLimit
               }
-              onChange={(e) => {
-                const val = e.target.value
-                setDailyLossLimit(val === '' ? null : Number(val))
-              }}
-              placeholder='4'
+              onChange={(e) =>
+                handleNumericInput(e.target.value, setDailyLossLimit, {
+                  min: 0.1,
+                  max: 20,
+                })
+              }
+              placeholder={DEFAULTS.DAILY_LOSS_LIMIT.toString()}
               step='0.5'
               className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
               min='0.1'
@@ -120,39 +100,44 @@ const DailyLoss = () => {
                   ? ''
                   : currentDailyLoss
               }
-              onChange={(e) => {
-                const val = e.target.value
-                setCurrentDailyLoss(
-                  val === '' ? null : Math.max(0, Number(val) || 0)
-                )
-              }}
-              placeholder='0'
+              onChange={(e) =>
+                handleNumericInput(e.target.value, setCurrentDailyLoss, {
+                  min: 0,
+                })
+              }
+              placeholder={DEFAULTS.CURRENT_LOSS.toString()}
               className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
               min='0'
             />
           </div>
         </div>
 
-        {/* Quick Preset Buttons - Moved here */}
+        {/* Quick Preset Buttons */}
         <div className='mb-6 pb-4 border-b border-gray-200'>
           <h3 className='font-medium text-gray-800 mb-3 text-sm'>
             Quick Presets
           </h3>
           <div className='flex flex-wrap gap-2'>
             <button
-              onClick={() => setDailyLossLimit(3)}
+              onClick={() =>
+                setDailyLossLimit(DAILY_LOSS_CONSTANTS.CONSERVATIVE_PERCENTAGE)
+              }
               className='px-3 py-2 text-sm bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200 transition-colors'>
-              Conservative (3%)
+              Conservative ({DAILY_LOSS_CONSTANTS.CONSERVATIVE_PERCENTAGE}%)
             </button>
             <button
-              onClick={() => setDailyLossLimit(4)}
+              onClick={() =>
+                setDailyLossLimit(DAILY_LOSS_CONSTANTS.STANDARD_PERCENTAGE)
+              }
               className='px-3 py-2 text-sm bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors'>
-              Standard (4%)
+              Standard ({DAILY_LOSS_CONSTANTS.STANDARD_PERCENTAGE}%)
             </button>
             <button
-              onClick={() => setDailyLossLimit(5)}
+              onClick={() =>
+                setDailyLossLimit(DAILY_LOSS_CONSTANTS.AGGRESSIVE_PERCENTAGE)
+              }
               className='px-3 py-2 text-sm bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition-colors'>
-              Aggressive (5%)
+              Aggressive ({DAILY_LOSS_CONSTANTS.AGGRESSIVE_PERCENTAGE}%)
             </button>
             <button
               onClick={() => setCurrentDailyLoss(0)}
@@ -168,7 +153,7 @@ const DailyLoss = () => {
               Daily Limit
             </h3>
             <p className='text-2xl font-bold text-red-600'>
-              ${dailyCalc.dailyLossAmount.toFixed(2)}
+              {formatCurrency(dailyCalc.dailyLossAmount)}
             </p>
           </div>
           <div className='bg-blue-50 p-4 rounded-lg border border-blue-200'>
@@ -176,7 +161,7 @@ const DailyLoss = () => {
               Remaining Limit
             </h3>
             <p className='text-2xl font-bold text-blue-600'>
-              ${dailyCalc.remainingDailyLimit.toFixed(2)}
+              {formatCurrency(dailyCalc.remainingDailyLimit)}
             </p>
           </div>
           <div className='bg-green-50 p-4 rounded-lg border border-green-200'>
@@ -206,9 +191,10 @@ const DailyLoss = () => {
           <div className='w-full bg-gray-200 rounded-full h-3'>
             <div
               className={`h-3 rounded-full transition-all duration-300 ${
-                dailyCalc.usedPercentage > 80
+                dailyCalc.usedPercentage > DAILY_LOSS_CONSTANTS.DANGER_THRESHOLD
                   ? 'bg-red-500'
-                  : dailyCalc.usedPercentage > 50
+                  : dailyCalc.usedPercentage >
+                    DAILY_LOSS_CONSTANTS.WARNING_THRESHOLD
                   ? 'bg-yellow-500'
                   : 'bg-green-500'
               }`}
@@ -219,7 +205,7 @@ const DailyLoss = () => {
         </div>
 
         {/* Alerts */}
-        {dailyCalc.shouldStop && (
+        {dailyCalc.shouldStop && !dailyCalc.isDangerZone && (
           <div className='bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4'>
             <div className='flex items-center gap-2 mb-2'>
               <AlertTriangle className='text-orange-500' size={20} />
@@ -228,9 +214,25 @@ const DailyLoss = () => {
               </h3>
             </div>
             <p className='text-sm text-orange-700'>
-              You've reached 50% of your daily loss limit. Many successful
-              traders stop here to preserve capital and avoid emotional
-              decisions.
+              You've reached {DAILY_LOSS_CONSTANTS.WARNING_THRESHOLD}% of your
+              daily loss limit. Many successful traders stop here to preserve
+              capital and avoid emotional decisions.
+            </p>
+          </div>
+        )}
+
+        {dailyCalc.isDangerZone && (
+          <div className='bg-red-50 border border-red-200 rounded-lg p-4 mb-4'>
+            <div className='flex items-center gap-2 mb-2'>
+              <AlertCircle className='text-red-500' size={20} />
+              <h3 className='font-semibold text-red-800'>
+                Danger Zone - Stop Trading
+              </h3>
+            </div>
+            <p className='text-sm text-red-700'>
+              You've reached {DAILY_LOSS_CONSTANTS.DANGER_THRESHOLD}% of your
+              daily loss limit. You should stop trading immediately to protect
+              your account.
             </p>
           </div>
         )}
@@ -240,12 +242,12 @@ const DailyLoss = () => {
             <div className='flex items-center gap-2 mb-2'>
               <AlertCircle className='text-red-500' size={20} />
               <h3 className='font-semibold text-red-800'>
-                Daily Limit Reached
+                Daily Limit Exceeded
               </h3>
             </div>
             <p className='text-sm text-red-700'>
-              You've hit your daily loss limit. Step away from trading and come
-              back tomorrow with a fresh perspective.
+              You've exceeded your daily loss limit. Step away from trading and
+              come back tomorrow with a fresh perspective.
             </p>
           </div>
         )}
@@ -268,8 +270,13 @@ const DailyLoss = () => {
               to prevent emotional revenge trading.
             </p>
             <div className='space-y-1 text-xs text-blue-600'>
-              <div>• Conservative: 3%</div>
-              <div>• Standard: 4-5%</div>
+              <div>
+                • Conservative: {DAILY_LOSS_CONSTANTS.CONSERVATIVE_PERCENTAGE}%
+              </div>
+              <div>
+                • Standard: {DAILY_LOSS_CONSTANTS.STANDARD_PERCENTAGE}-
+                {DAILY_LOSS_CONSTANTS.AGGRESSIVE_PERCENTAGE}%
+              </div>
               <div>• Aggressive: 6%+ (not recommended)</div>
             </div>
           </div>
@@ -286,8 +293,14 @@ const DailyLoss = () => {
             </p>
             <div className='space-y-1 text-xs text-green-600'>
               <div>• 25% of limit: Review strategy</div>
-              <div>• 50% of limit: Consider stopping</div>
-              <div>• 75% of limit: Mandatory break</div>
+              <div>
+                • {DAILY_LOSS_CONSTANTS.WARNING_THRESHOLD}% of limit: Consider
+                stopping
+              </div>
+              <div>
+                • {DAILY_LOSS_CONSTANTS.DANGER_THRESHOLD}% of limit: Mandatory
+                break
+              </div>
             </div>
           </div>
 
@@ -339,7 +352,9 @@ const DailyLoss = () => {
         </div>
         <p className='text-yellow-700 mb-3'>
           <strong>
-            Never exceed 4-5% of your main account balance in daily losses.
+            Never exceed {DAILY_LOSS_CONSTANTS.STANDARD_PERCENTAGE}-
+            {DAILY_LOSS_CONSTANTS.AGGRESSIVE_PERCENTAGE}% of your main account
+            balance in daily losses.
           </strong>{' '}
           This single rule has saved more trading careers than any other risk
           management technique.

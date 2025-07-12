@@ -1,3 +1,5 @@
+import { formatCurrency } from '../utils/helpers'
+
 export const TradeBreakdown = ({ calculations }) => {
   const { hasValidData, results, activeModel } = calculations
 
@@ -38,9 +40,11 @@ export const TradeBreakdown = ({ calculations }) => {
                 key={index}
                 className='border-b border-gray-100 hover:bg-gray-50'>
                 <td className='py-2 px-2 sm:px-3 font-medium'>{trade.trade}</td>
-                <td className='py-2 px-2 sm:px-3'>${trade.risk.toFixed(2)}</td>
                 <td className='py-2 px-2 sm:px-3'>
-                  ${trade.remaining.toFixed(2)}
+                  {formatCurrency(trade.risk)}
+                </td>
+                <td className='py-2 px-2 sm:px-3'>
+                  {formatCurrency(trade.remaining)}
                 </td>
                 {activeModel === 'percentage' && (
                   <td className='py-2 px-2 sm:px-3'>{trade.lossPercentage}%</td>

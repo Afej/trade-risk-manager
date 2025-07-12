@@ -1,4 +1,6 @@
 import { TrendingDown } from 'lucide-react'
+import { formatCurrency } from '../utils/helpers'
+import { RISK_CONSTANTS } from '../utils/constants'
 
 export const CurrentStatus = ({ calculations }) => {
   const {
@@ -19,13 +21,15 @@ export const CurrentStatus = ({ calculations }) => {
         <div className='flex justify-between'>
           <span className='text-gray-600'>Initial Risk per Trade:</span>
           <span className='font-medium'>
-            ${(totalAmountValue / 10).toFixed(2)}
+            {formatCurrency(
+              totalAmountValue / RISK_CONSTANTS.DEFAULT_INITIAL_RISK_PERCENTAGE
+            )}
           </span>
         </div>
         <div className='flex justify-between'>
           <span className='text-gray-600'>Current Risk per Trade:</span>
           <span className='font-medium text-blue-600'>
-            ${currentRisk.toFixed(2)}
+            {formatCurrency(currentRisk)}
           </span>
         </div>
         <div className='flex justify-between'>
@@ -34,7 +38,7 @@ export const CurrentStatus = ({ calculations }) => {
         </div>
         <div className='flex justify-between'>
           <span className='text-gray-600'>Remaining Amount:</span>
-          <span className='font-medium'>${remainingAmount.toFixed(2)}</span>
+          <span className='font-medium'>{formatCurrency(remainingAmount)}</span>
         </div>
         <div className='flex justify-between'>
           <span className='text-gray-600'>Trades Remaining:</span>

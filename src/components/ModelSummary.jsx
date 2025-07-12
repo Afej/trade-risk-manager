@@ -1,11 +1,12 @@
 import { BarChart3, AlertCircle } from 'lucide-react'
+import { formatCurrency, getNumericValue } from '../utils/helpers'
+import { RISK_CONSTANTS } from '../utils/constants'
 
 export const ModelSummary = ({ calculations }) => {
   const {
     activeModel,
     hasValidData,
     results,
-    getNumericValue,
     lossTrigger,
     firstThreshold,
     secondThreshold,
@@ -35,39 +36,71 @@ export const ModelSummary = ({ calculations }) => {
             <div className='flex justify-between'>
               <span>Initial Risk:</span>
               <span className='font-medium'>
-                {hasValidData ? `$${results.initialRisk.toFixed(2)}` : '-'}
+                {hasValidData ? formatCurrency(results.initialRisk) : '-'}
               </span>
             </div>
             {activeModel === 'simplified' ? (
               <div className='flex justify-between'>
-                <span>After {getNumericValue(lossTrigger, 3)} losses:</span>
+                <span>
+                  After{' '}
+                  {getNumericValue(
+                    lossTrigger,
+                    RISK_CONSTANTS.DEFAULT_LOSS_TRIGGER
+                  )}{' '}
+                  losses:
+                </span>
                 <span className='font-medium'>
                   {hasValidData
-                    ? `$${(results.initialRisk * 0.5).toFixed(2)}`
+                    ? formatCurrency(
+                        results.initialRisk *
+                          (RISK_CONSTANTS.DEFAULT_REDUCTION_PERCENTAGE / 100)
+                      )
                     : '-'}
                 </span>
               </div>
             ) : (
               <>
                 <div className='flex justify-between'>
-                  <span>At {getNumericValue(firstThreshold, 30)}% loss:</span>
+                  <span>
+                    At{' '}
+                    {getNumericValue(
+                      firstThreshold,
+                      RISK_CONSTANTS.DEFAULT_FIRST_THRESHOLD
+                    )}
+                    % loss:
+                  </span>
                   <span className='font-medium'>
                     {hasValidData
-                      ? `$${(
+                      ? formatCurrency(
                           results.initialRisk *
-                          (getNumericValue(riskReduction1, 70) / 100)
-                        ).toFixed(2)}`
+                            (getNumericValue(
+                              riskReduction1,
+                              RISK_CONSTANTS.DEFAULT_RISK_REDUCTION_1
+                            ) /
+                              100)
+                        )
                       : '-'}
                   </span>
                 </div>
                 <div className='flex justify-between'>
-                  <span>At {getNumericValue(secondThreshold, 60)}% loss:</span>
+                  <span>
+                    At{' '}
+                    {getNumericValue(
+                      secondThreshold,
+                      RISK_CONSTANTS.DEFAULT_SECOND_THRESHOLD
+                    )}
+                    % loss:
+                  </span>
                   <span className='font-medium'>
                     {hasValidData
-                      ? `$${(
+                      ? formatCurrency(
                           results.initialRisk *
-                          (getNumericValue(riskReduction2, 50) / 100)
-                        ).toFixed(2)}`
+                            (getNumericValue(
+                              riskReduction2,
+                              RISK_CONSTANTS.DEFAULT_RISK_REDUCTION_2
+                            ) /
+                              100)
+                        )
                       : '-'}
                   </span>
                 </div>
@@ -83,17 +116,32 @@ export const ModelSummary = ({ calculations }) => {
           </h3>
           <p className='text-sm text-yellow-700'>
             {activeModel === 'simplified'
-              ? `Initial risk = Total ÷ 10. After ${getNumericValue(
+              ? `Initial risk = Total ÷ ${
+                  RISK_CONSTANTS.DEFAULT_INITIAL_RISK_PERCENTAGE
+                }. After ${getNumericValue(
                   lossTrigger,
-                  3
-                )} losses, risk = Initial × 0.5`
-              : `Initial risk = Total ÷ 10. At ${getNumericValue(
+                  RISK_CONSTANTS.DEFAULT_LOSS_TRIGGER
+                )} losses, risk = Initial × ${
+                  RISK_CONSTANTS.DEFAULT_REDUCTION_PERCENTAGE / 100
+                }`
+              : `Initial risk = Total ÷ ${
+                  RISK_CONSTANTS.DEFAULT_INITIAL_RISK_PERCENTAGE
+                }. At ${getNumericValue(
                   firstThreshold,
-                  30
+                  RISK_CONSTANTS.DEFAULT_FIRST_THRESHOLD
                 )}% loss: × ${
-                  getNumericValue(riskReduction1, 70) / 100
-                }, At ${getNumericValue(secondThreshold, 60)}% loss: × ${
-                  getNumericValue(riskReduction2, 50) / 100
+                  getNumericValue(
+                    riskReduction1,
+                    RISK_CONSTANTS.DEFAULT_RISK_REDUCTION_1
+                  ) / 100
+                }, At ${getNumericValue(
+                  secondThreshold,
+                  RISK_CONSTANTS.DEFAULT_SECOND_THRESHOLD
+                )}% loss: × ${
+                  getNumericValue(
+                    riskReduction2,
+                    RISK_CONSTANTS.DEFAULT_RISK_REDUCTION_2
+                  ) / 100
                 }`}
           </p>
         </div>
