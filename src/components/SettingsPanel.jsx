@@ -242,13 +242,22 @@ export const SettingsPanel = ({ calculations, onSettingsChange }) => {
             handleNumericInput(
               e.target.value,
               (value) => onSettingsChange('currentLoss', value),
-              { min: 0 }
+              {
+                min: 0,
+                maxRelativeTo: totalAmount || 0, // Can't exceed total amount
+              }
             )
           }
           placeholder={DEFAULTS.CURRENT_LOSS.toString()}
           className='px-3 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
           min='0'
+          max={totalAmount || 0}
         />
+        {currentLoss > (totalAmount || 0) && (
+          <p className='mt-1 text-xs text-red-600'>
+            Current loss cannot exceed total amount to risk
+          </p>
+        )}
       </div>
     </div>
   )

@@ -51,9 +51,10 @@ export const clamp = (value, min, max) => {
  * @param {object} options - Optional configuration
  * @param {number} options.min - Minimum value
  * @param {number} options.max - Maximum value
+ * @param {number} options.maxRelativeTo - Maximum value relative to another value
  */
 export const handleNumericInput = (inputValue, setter, options = {}) => {
-  const { min, max } = options
+  const { min, max, maxRelativeTo } = options
 
   if (inputValue === '') {
     setter(null)
@@ -61,10 +62,15 @@ export const handleNumericInput = (inputValue, setter, options = {}) => {
   }
 
   let numValue = Number(inputValue)
-  if (isNaN(numValue)) return // Don't update if invalid
+  if (isNaN(numValue)) return
 
   if (min !== undefined) numValue = Math.max(min, numValue)
   if (max !== undefined) numValue = Math.min(max, numValue)
+
+  // Additional validation for relative constraints
+  if (maxRelativeTo !== undefined && numValue > maxRelativeTo) {
+    numValue = maxRelativeTo
+  }
 
   setter(numValue)
 }
