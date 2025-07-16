@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import {
   Shield,
   Clock,
@@ -6,23 +5,27 @@ import {
   AlertTriangle,
   AlertCircle,
 } from 'lucide-react'
+import { usePersistedSettings } from '../hooks/usePersistedSettings'
 import { calculateDailyLossMetrics } from '../utils/calculations'
 import { handleNumericInput, formatCurrency } from '../utils/helpers'
 import { DEFAULTS, DAILY_LOSS_CONSTANTS } from '../utils/constants'
 
+const DAILY_LOSS_DEFAULTS = {
+  accountBalance: DEFAULTS.ACCOUNT_BALANCE,
+  dailyLossLimit: DEFAULTS.DAILY_LOSS_LIMIT,
+  currentDailyLoss: DEFAULTS.CURRENT_LOSS,
+}
+
 const DailyLoss = () => {
-  const [accountBalance, setAccountBalance] = useState(DEFAULTS.ACCOUNT_BALANCE)
-  const [dailyLossLimit, setDailyLossLimit] = useState(
-    DEFAULTS.DAILY_LOSS_LIMIT
-  )
-  const [currentDailyLoss, setCurrentDailyLoss] = useState(
-    DEFAULTS.CURRENT_LOSS
+  const [settings, updateSetting, resetSettings] = usePersistedSettings(
+    'dailyLossSettings',
+    DAILY_LOSS_DEFAULTS
   )
 
   const dailyCalc = calculateDailyLossMetrics({
-    accountBalance,
-    dailyLossLimit,
-    currentDailyLoss,
+    accountBalance: settings.accountBalance,
+    dailyLossLimit: settings.dailyLossLimit,
+    currentDailyLoss: settings.currentDailyLoss,
   })
 
   return (
@@ -39,9 +42,16 @@ const DailyLoss = () => {
 
       {/* Daily Loss Calculator */}
       <div className='p-4 mb-6 bg-white rounded-lg shadow-lg sm:p-6'>
-        <h2 className='mb-4 text-lg font-semibold text-gray-800 sm:text-xl'>
-          Daily Loss Calculator
-        </h2>
+        <div className='flex justify-between items-center mb-4'>
+          <h2 className='text-lg font-semibold text-gray-800 sm:text-xl'>
+            Daily Loss Calculator
+          </h2>
+          <button
+            onClick={resetSettings}
+            className='px-3 py-1 text-xs text-red-800 bg-red-100 rounded-lg transition-colors hover:bg-red-200'>
+            Reset
+          </button>
+        </div>
 
         <div className='grid grid-cols-1 gap-4 mb-4 sm:grid-cols-3'>
           <div>
@@ -53,14 +63,17 @@ const DailyLoss = () => {
               inputMode='numeric'
               pattern='[0-9]*'
               value={
-                accountBalance === null || accountBalance === undefined
+                settings.accountBalance === null ||
+                settings.accountBalance === undefined
                   ? ''
-                  : accountBalance
+                  : settings.accountBalance
               }
               onChange={(e) =>
-                handleNumericInput(e.target.value, setAccountBalance, {
-                  min: 1,
-                })
+                handleNumericInput(
+                  e.target.value,
+                  (value) => updateSetting('accountBalance', value),
+                  { min: 1 }
+                )
               }
               placeholder={DEFAULTS.ACCOUNT_BALANCE.toString()}
               className='px-3 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
@@ -76,15 +89,17 @@ const DailyLoss = () => {
               inputMode='numeric'
               pattern='[0-9]*'
               value={
-                dailyLossLimit === null || dailyLossLimit === undefined
+                settings.dailyLossLimit === null ||
+                settings.dailyLossLimit === undefined
                   ? ''
-                  : dailyLossLimit
+                  : settings.dailyLossLimit
               }
               onChange={(e) =>
-                handleNumericInput(e.target.value, setDailyLossLimit, {
-                  min: 0.1,
-                  max: 20,
-                })
+                handleNumericInput(
+                  e.target.value,
+                  (value) => updateSetting('dailyLossLimit', value),
+                  { min: 0.1, max: 20 }
+                )
               }
               placeholder={DEFAULTS.DAILY_LOSS_LIMIT.toString()}
               step='0.5'
@@ -102,14 +117,17 @@ const DailyLoss = () => {
               inputMode='numeric'
               pattern='[0-9]*'
               value={
-                currentDailyLoss === null || currentDailyLoss === undefined
+                settings.currentDailyLoss === null ||
+                settings.currentDailyLoss === undefined
                   ? ''
-                  : currentDailyLoss
+                  : settings.currentDailyLoss
               }
               onChange={(e) =>
-                handleNumericInput(e.target.value, setCurrentDailyLoss, {
-                  min: 0,
-                })
+                handleNumericInput(
+                  e.target.value,
+                  (value) => updateSetting('currentDailyLoss', value),
+                  { min: 0 }
+                )
               }
               placeholder={DEFAULTS.CURRENT_LOSS.toString()}
               className='px-3 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
@@ -126,27 +144,36 @@ const DailyLoss = () => {
           <div className='flex flex-wrap gap-2'>
             <button
               onClick={() =>
-                setDailyLossLimit(DAILY_LOSS_CONSTANTS.CONSERVATIVE_PERCENTAGE)
+                updateSetting(
+                  'dailyLossLimit',
+                  DAILY_LOSS_CONSTANTS.CONSERVATIVE_PERCENTAGE
+                )
               }
               className='px-3 py-2 text-sm text-purple-800 bg-purple-100 rounded-lg transition-colors hover:bg-purple-200'>
               Conservative ({DAILY_LOSS_CONSTANTS.CONSERVATIVE_PERCENTAGE}%)
             </button>
             <button
               onClick={() =>
-                setDailyLossLimit(DAILY_LOSS_CONSTANTS.STANDARD_PERCENTAGE)
+                updateSetting(
+                  'dailyLossLimit',
+                  DAILY_LOSS_CONSTANTS.STANDARD_PERCENTAGE
+                )
               }
               className='px-3 py-2 text-sm text-blue-800 bg-blue-100 rounded-lg transition-colors hover:bg-blue-200'>
               Standard ({DAILY_LOSS_CONSTANTS.STANDARD_PERCENTAGE}%)
             </button>
             <button
               onClick={() =>
-                setDailyLossLimit(DAILY_LOSS_CONSTANTS.AGGRESSIVE_PERCENTAGE)
+                updateSetting(
+                  'dailyLossLimit',
+                  DAILY_LOSS_CONSTANTS.AGGRESSIVE_PERCENTAGE
+                )
               }
               className='px-3 py-2 text-sm text-green-800 bg-green-100 rounded-lg transition-colors hover:bg-green-200'>
               Aggressive ({DAILY_LOSS_CONSTANTS.AGGRESSIVE_PERCENTAGE}%)
             </button>
             <button
-              onClick={() => setCurrentDailyLoss(0)}
+              onClick={() => updateSetting('currentDailyLoss', 0)}
               className='px-3 py-2 text-sm text-gray-800 bg-gray-100 rounded-lg transition-colors hover:bg-gray-200'>
               Reset Daily Loss
             </button>

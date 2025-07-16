@@ -11,13 +11,21 @@ export const SettingsPanel = ({ calculations, onSettingsChange }) => {
     riskReduction2,
     totalAmount,
     currentLoss,
+    resetSettings,
   } = calculations
 
   return (
     <div className='p-4 bg-white rounded-lg shadow-lg sm:p-6'>
-      <h2 className='mb-4 text-lg font-semibold text-gray-800 sm:text-xl'>
-        Settings
-      </h2>
+      <div className='flex justify-between items-center mb-4'>
+        <h2 className='text-lg font-semibold text-gray-800 sm:text-xl'>
+          Settings
+        </h2>
+        <button
+          onClick={resetSettings}
+          className='px-3 py-1 text-xs text-red-800 bg-red-100 rounded-lg transition-colors hover:bg-red-200'>
+          Reset
+        </button>
+      </div>
 
       {/* Model Selection */}
       <div className='mb-6'>
