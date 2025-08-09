@@ -6,17 +6,19 @@ export const Navigation = () => {
 
   const navItems = [
     { path: '/', label: 'Risk Calculator', icon: Calculator },
-    { path: '/daily-loss', label: 'Daily Loss', icon: Shield },
+    { path: '/risk-limits', label: 'Risk Limits', icon: Shield },
     { path: '/about', label: 'How to Use', icon: HelpCircle },
   ]
 
   return (
-    <nav className='bg-white shadow-sm border-b sticky top-0 z-10'>
-      <div className='max-w-6xl mx-auto px-3 sm:px-6'>
-        <div className='flex items-center justify-between h-16'>
-          <div className='flex items-center gap-2'>
+    <nav className='sticky top-0 z-10 bg-white border-b shadow-sm'>
+      <div className='px-3 mx-auto max-w-6xl sm:px-6'>
+        <div className='flex justify-between items-center h-16'>
+          <div className='flex gap-2 items-center'>
             <Calculator className='text-blue-600' size={24} />
-            <span className='font-bold text-gray-800'>Trade Risk Manager</span>
+            <span className='font-bold text-gray-800'>
+              Trading Risk Manager
+            </span>
           </div>
 
           <div className='flex space-x-1'>

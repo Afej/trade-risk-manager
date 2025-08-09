@@ -9,18 +9,32 @@ import { usePersistedSettings } from '../hooks/usePersistedSettings'
 import { calculateDailyLossMetrics } from '../utils/calculations'
 import { handleNumericInput, formatCurrency } from '../utils/helpers'
 import { DEFAULTS, DAILY_LOSS_CONSTANTS } from '../utils/constants'
+import { useState } from 'react'
 
-const DAILY_LOSS_DEFAULTS = {
+const RISK_LIMITS_DEFAULTS = {
   accountBalance: DEFAULTS.ACCOUNT_BALANCE,
   dailyLossLimit: DEFAULTS.DAILY_LOSS_LIMIT,
   currentDailyLoss: DEFAULTS.CURRENT_LOSS,
+  trailingEnabled: false,
+  highWaterMark: null,
+  maxDrawdown: null,
 }
 
-const DailyLoss = () => {
+const RiskLimits = () => {
   const [settings, updateSetting, resetSettings] = usePersistedSettings(
-    'dailyLossSettings',
-    DAILY_LOSS_DEFAULTS
+    'riskLimitsSettings',
+    RISK_LIMITS_DEFAULTS
   )
+
+  const [activeSection, setActiveSection] = useState('daily')
+
+  const scrollToSection = (sectionId) => {
+    setActiveSection(sectionId)
+    document.getElementById(sectionId)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }
 
   const dailyCalc = calculateDailyLossMetrics({
     accountBalance: settings.accountBalance,
@@ -28,23 +42,110 @@ const DailyLoss = () => {
     currentDailyLoss: settings.currentDailyLoss,
   })
 
+  // Current trading balance for trailing (separate input)
+  const [currentTradingBalance, setCurrentTradingBalance] = useState(
+    settings.accountBalance || DEFAULTS.ACCOUNT_BALANCE
+  )
+
+  // Auto-update high water mark when current balance increases
+  const handleCurrentBalanceChange = (newBalance) => {
+    setCurrentTradingBalance(newBalance)
+
+    if (
+      settings.trailingEnabled &&
+      newBalance > (settings.highWaterMark || 0)
+    ) {
+      updateSetting('highWaterMark', newBalance)
+    }
+  }
+
+  // Initialize high water mark when trailing is first enabled
+  const handleTrailingToggle = () => {
+    const newTrailingState = !settings.trailingEnabled
+    updateSetting('trailingEnabled', newTrailingState)
+
+    if (newTrailingState && !settings.highWaterMark) {
+      // Set high water mark to current trading balance when first enabled
+      updateSetting('highWaterMark', currentTradingBalance)
+    }
+  }
+
+  // Trailing drawdown calculations
+  const trailingCalc = () => {
+    if (
+      !settings.trailingEnabled ||
+      !currentTradingBalance ||
+      !settings.maxDrawdown
+    ) {
+      return null
+    }
+
+    const highWater = settings.highWaterMark || currentTradingBalance
+    const safeZone = highWater - settings.maxDrawdown
+    const distanceFromDanger = currentTradingBalance - safeZone
+    const isInDanger = distanceFromDanger <= 0
+
+    return {
+      highWaterMark: highWater,
+      safeZone,
+      distanceFromDanger,
+      isInDanger,
+      drawdownPercentage: ((settings.maxDrawdown / highWater) * 100).toFixed(1),
+    }
+  }
+
+  const trailing = trailingCalc()
+
   return (
     <div className='p-3 mx-auto max-w-6xl sm:p-6'>
       <div className='mb-6 sm:mb-8'>
         <h1 className='flex gap-2 items-center mb-2 text-xl font-bold text-gray-800 sm:text-2xl'>
           <Shield className='text-green-600' />
-          Daily Loss Management
+          Risk Limits & Tracking
         </h1>
         <p className='text-gray-600'>
-          Manage your daily risk limits and track your progress
+          Manage daily limits, track progress and trailing drawdown monitoring.
         </p>
       </div>
 
-      {/* Daily Loss Calculator */}
-      <div className='p-4 mb-6 bg-white rounded-lg shadow-lg sm:p-6'>
+      {/* Quick Navigation Menu */}
+      <div className='p-2 mb-6 bg-white rounded-lg border border-gray-200 shadow-sm'>
+        <div className='flex flex-wrap gap-2'>
+          <button
+            onClick={() => scrollToSection('daily')}
+            className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+              activeSection === 'daily'
+                ? 'bg-blue-100 text-blue-700 font-medium'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}>
+            📊 Daily Limits
+          </button>
+          <button
+            onClick={() => scrollToSection('trailing')}
+            className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+              activeSection === 'trailing'
+                ? 'bg-blue-100 text-blue-700 font-medium'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}>
+            📈 Trailing Drawdown
+          </button>
+          <button
+            onClick={() => scrollToSection('tips')}
+            className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+              activeSection === 'tips'
+                ? 'bg-blue-100 text-blue-700 font-medium'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}>
+            💡 Tips
+          </button>
+        </div>
+      </div>
+
+      {/* Daily Loss Management */}
+      <div id='daily' className='p-4 mb-6 bg-white rounded-lg shadow-lg sm:p-6'>
         <div className='flex justify-between items-center mb-4'>
           <h2 className='text-lg font-semibold text-gray-800 sm:text-xl'>
-            Daily Loss Calculator
+            Daily Loss Management
           </h2>
           <button
             onClick={resetSettings}
@@ -79,6 +180,9 @@ const DailyLoss = () => {
               className='px-3 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
               min='1'
             />
+            <p className='mt-1 text-xs text-gray-500'>
+              Fixed size for daily % calculations (e.g., 10k prop account)
+            </p>
           </div>
           <div>
             <label className='block mb-2 text-sm font-medium text-gray-700'>
@@ -286,8 +390,196 @@ const DailyLoss = () => {
         )}
       </div>
 
+      {/* Trailing Drawdown Monitor */}
+      <div
+        id='trailing'
+        className='p-4 mb-6 bg-white rounded-lg shadow-lg sm:p-6'>
+        <h2 className='mb-4 text-lg font-semibold text-gray-800 sm:text-xl'>
+          Trailing Drawdown Monitor
+        </h2>
+
+        {/* Trailing Toggle */}
+        <div className='flex justify-between items-center p-3 mb-4 bg-gray-50 rounded-lg'>
+          <div>
+            <h3 className='font-medium text-gray-800'>
+              Enable Trailing Drawdown
+            </h3>
+            <p className='text-sm text-gray-600'>
+              Monitor drawdown that follows your high water mark
+            </p>
+          </div>
+          <label className='inline-flex relative items-center cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={settings.trailingEnabled}
+              onChange={handleTrailingToggle}
+              className='sr-only'
+            />
+            <div
+              className={`relative w-11 h-6 rounded-full transition-colors duration-200 ease-in-out ${
+                settings.trailingEnabled ? 'bg-blue-600' : 'bg-gray-300'
+              }`}>
+              <div
+                className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full transition-transform duration-200 ease-in-out ${
+                  settings.trailingEnabled ? 'transform translate-x-5' : ''
+                }`}
+              />
+            </div>
+          </label>
+        </div>
+
+        {settings.trailingEnabled && (
+          <>
+            {/* Trailing Settings */}
+            <div className='grid grid-cols-1 gap-4 mb-4 sm:grid-cols-3'>
+              <div>
+                <label className='block mb-2 text-sm font-medium text-gray-700'>
+                  Current Trading Balance
+                </label>
+                <input
+                  type='number'
+                  inputMode='numeric'
+                  pattern='[0-9]*'
+                  value={
+                    currentTradingBalance === null ||
+                    currentTradingBalance === undefined
+                      ? ''
+                      : currentTradingBalance
+                  }
+                  onChange={(e) =>
+                    handleNumericInput(
+                      e.target.value,
+                      handleCurrentBalanceChange,
+                      { min: 1 }
+                    )
+                  }
+                  placeholder='Current account balance'
+                  className='px-3 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                  min='1'
+                />
+                <p className='mt-1 text-xs text-gray-500'>
+                  Your actual current balance (updates daily)
+                </p>
+              </div>
+              <div>
+                <label className='block mb-2 text-sm font-medium text-gray-700'>
+                  Max Drawdown Amount
+                </label>
+                <input
+                  type='number'
+                  inputMode='numeric'
+                  pattern='[0-9]*'
+                  value={
+                    settings.maxDrawdown === null ||
+                    settings.maxDrawdown === undefined
+                      ? ''
+                      : settings.maxDrawdown
+                  }
+                  onChange={(e) =>
+                    handleNumericInput(
+                      e.target.value,
+                      (value) => updateSetting('maxDrawdown', value),
+                      { min: 1 }
+                    )
+                  }
+                  placeholder='e.g., 8000'
+                  className='px-3 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                  min='1'
+                />
+                <p className='mt-1 text-xs text-gray-500'>
+                  Fixed dollar amount you can lose from high water mark
+                </p>
+              </div>
+              <div>
+                <label className='block mb-2 text-sm font-medium text-gray-700'>
+                  High Water Mark
+                </label>
+                <input
+                  type='number'
+                  value={settings.highWaterMark || ''}
+                  readOnly
+                  className='px-3 py-2 w-full text-gray-500 bg-gray-50 rounded-lg border border-gray-300'
+                />
+                <p className='mt-1 text-xs text-gray-500'>
+                  Highest balance reached (auto-updates)
+                </p>
+              </div>
+            </div>
+
+            {/* Trailing Status */}
+            {trailing && (
+              <div className='space-y-4'>
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+                  <div className='p-4 bg-blue-50 rounded-lg border border-blue-200'>
+                    <h3 className='mb-1 text-sm font-medium text-blue-800'>
+                      High Water Mark
+                    </h3>
+                    <p className='text-xl font-bold text-blue-600'>
+                      {formatCurrency(trailing.highWaterMark)}
+                    </p>
+                  </div>
+                  <div className='p-4 bg-yellow-50 rounded-lg border border-yellow-200'>
+                    <h3 className='mb-1 text-sm font-medium text-yellow-800'>
+                      Safe Zone
+                    </h3>
+                    <p className='text-xl font-bold text-yellow-600'>
+                      {formatCurrency(trailing.safeZone)}
+                    </p>
+                  </div>
+                  <div
+                    className={`p-4 rounded-lg border ${
+                      trailing.isInDanger
+                        ? 'bg-red-50 border-red-200'
+                        : 'bg-green-50 border-green-200'
+                    }`}>
+                    <h3
+                      className={`text-sm font-medium mb-1 ${
+                        trailing.isInDanger ? 'text-red-800' : 'text-green-800'
+                      }`}>
+                      Distance from Danger
+                    </h3>
+                    <p
+                      className={`text-xl font-bold ${
+                        trailing.isInDanger ? 'text-red-600' : 'text-green-600'
+                      }`}>
+                      {formatCurrency(Math.abs(trailing.distanceFromDanger))}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Trailing Alert */}
+                {trailing.isInDanger && (
+                  <div className='p-4 bg-red-50 rounded-lg border border-red-200'>
+                    <div className='flex gap-2 items-center mb-2'>
+                      <AlertCircle className='text-red-500' size={20} />
+                      <h3 className='font-semibold text-red-800'>
+                        Trailing Drawdown Violated!
+                      </h3>
+                    </div>
+                    <p className='text-sm text-red-700'>
+                      Your account balance is below the safe zone. You've
+                      exceeded the {trailing.drawdownPercentage}% trailing
+                      drawdown limit.
+                    </p>
+                  </div>
+                )}
+
+                <div className='p-3 bg-gray-50 rounded-lg'>
+                  <p className='text-sm text-gray-700'>
+                    <strong>How it works:</strong> Your safe zone is{' '}
+                    {formatCurrency(settings.maxDrawdown)} below your high water
+                    mark. As your account grows, the high water mark increases,
+                    and your safe zone moves up with it.
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
       {/* Daily Trading Tips */}
-      <div className='p-4 mb-6 bg-white rounded-lg shadow-lg sm:p-6'>
+      <div id='tips' className='p-4 mb-6 bg-white rounded-lg shadow-lg sm:p-6'>
         <h2 className='mb-4 text-lg font-semibold text-gray-800 sm:text-xl'>
           Daily Trading Tips
         </h2>
@@ -411,4 +703,4 @@ const DailyLoss = () => {
   )
 }
 
-export default DailyLoss
+export default RiskLimits

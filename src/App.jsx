@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Layout } from './components/layout/Layout'
 import Home from './pages/Home'
-import DailyLoss from './pages/DailyLoss'
+import RiskLimits from './pages/RiskLimits'
 import About from './pages/About'
 
 function App() {
@@ -10,7 +10,7 @@ function App() {
       <Layout>
         <Routes>
           <Route path='/' element={<Home />} />
-          <Route path='/daily-loss' element={<DailyLoss />} />
+          <Route path='/risk-limits' element={<RiskLimits />} />
           <Route path='/about' element={<About />} />
         </Routes>
       </Layout>
