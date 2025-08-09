@@ -17,14 +17,15 @@ const Home = () => {
       riskReduction2: calculations.setRiskReduction2,
       totalAmount: calculations.setTotalAmount,
       currentLoss: calculations.setCurrentLoss,
+      accountBalance: calculations.setAccountBalance,
     }
     setterMap[field]?.(value)
   }
 
   return (
-    <div className='max-w-6xl mx-auto p-3 sm:p-6'>
+    <div className='p-3 mx-auto max-w-6xl sm:p-6'>
       <div className='mb-6 sm:mb-8'>
-        <h1 className='text-xl sm:text-2xl font-bold text-gray-800 mb-2'>
+        <h1 className='mb-2 text-xl font-bold text-gray-800 sm:text-2xl'>
           Risk Management Calculator
         </h1>
         <p className='text-gray-600'>
@@ -32,7 +33,7 @@ const Home = () => {
         </p>
       </div>
 
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8'>
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-8'>
         <div>
           <SettingsPanel
             calculations={calculations}

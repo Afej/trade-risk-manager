@@ -11,8 +11,15 @@ export const SettingsPanel = ({ calculations, onSettingsChange }) => {
     riskReduction2,
     totalAmount,
     currentLoss,
+    accountBalance,
     resetSettings,
   } = calculations
+
+  // Calculate risk percentage if both values exist
+  const riskPercentage =
+    accountBalance && totalAmount
+      ? ((totalAmount / accountBalance) * 100).toFixed(1)
+      : null
 
   return (
     <div className='p-4 bg-white rounded-lg shadow-lg sm:p-6'>
@@ -25,6 +32,46 @@ export const SettingsPanel = ({ calculations, onSettingsChange }) => {
           className='px-3 py-1 text-xs text-red-800 bg-red-100 rounded-lg transition-colors hover:bg-red-200'>
           Reset
         </button>
+      </div>
+
+      {/* Account Balance - Optional */}
+      <div className='mb-6'>
+        <label className='block mb-2 text-sm font-medium text-gray-700'>
+          Account Balance (Optional)
+        </label>
+        <input
+          type='number'
+          inputMode='numeric'
+          pattern='[0-9]*'
+          value={
+            accountBalance === null || accountBalance === undefined
+              ? ''
+              : accountBalance
+          }
+          onChange={(e) =>
+            handleNumericInput(
+              e.target.value,
+              (value) => onSettingsChange('accountBalance', value),
+              { min: 1 }
+            )
+          }
+          placeholder='For context and suggestions'
+          className='px-3 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+          min='1'
+        />
+        {riskPercentage && (
+          <p className='mt-1 text-xs font-semibold text-gray-500'>
+            You're risking {riskPercentage}% of your account balance
+          </p>
+        )}
+        {accountBalance && totalAmount && accountBalance >= totalAmount * 2 && (
+          <div className='p-2 mt-2 bg-blue-50 rounded border border-blue-200'>
+            <p className='text-xs text-blue-700'>
+              💡 Your account has grown significantly. Consider updating your
+              risk amount if comfortable.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Model Selection */}

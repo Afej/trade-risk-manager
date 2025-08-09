@@ -11,6 +11,7 @@ import { DEFAULTS } from '../utils/constants'
 const RISK_CALCULATOR_DEFAULTS = {
   totalAmount: DEFAULTS.TOTAL_AMOUNT,
   currentLoss: DEFAULTS.CURRENT_LOSS,
+  accountBalance: null,
   activeModel: 'simplified',
   lossTrigger: 3,
   firstThreshold: 30,
@@ -91,6 +92,7 @@ export const useRiskCalculations = () => {
     secondThreshold: settings.secondThreshold,
     riskReduction1: settings.riskReduction1,
     riskReduction2: settings.riskReduction2,
+    accountBalance: settings.accountBalance,
 
     // Setters
     setTotalAmount: (value) => updateSetting('totalAmount', value),
@@ -101,6 +103,7 @@ export const useRiskCalculations = () => {
     setSecondThreshold: (value) => updateSetting('secondThreshold', value),
     setRiskReduction1: (value) => updateSetting('riskReduction1', value),
     setRiskReduction2: (value) => updateSetting('riskReduction2', value),
+    setAccountBalance: (value) => updateSetting('accountBalance', value),
 
     // Reset function
     resetSettings,
