@@ -5,7 +5,7 @@ export const Navigation = () => {
   const location = useLocation()
 
   const navItems = [
-    { path: '/', label: 'Risk Calculator', icon: Calculator },
+    { path: '/', label: 'Position Sizing', icon: Calculator },
     { path: '/risk-limits', label: 'Risk Limits', icon: Shield },
     { path: '/about', label: 'How to Use', icon: HelpCircle },
   ]
