@@ -9,13 +9,14 @@ import { usePersistedSettings } from '../hooks/usePersistedSettings'
 import { calculateDailyLossMetrics } from '../utils/calculations'
 import { handleNumericInput, formatCurrency } from '../utils/helpers'
 import { DEFAULTS, DAILY_LOSS_CONSTANTS } from '../utils/constants'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const RISK_LIMITS_DEFAULTS = {
   accountBalance: DEFAULTS.ACCOUNT_BALANCE,
   dailyLossLimit: DEFAULTS.DAILY_LOSS_LIMIT,
   currentDailyLoss: DEFAULTS.CURRENT_LOSS,
   trailingEnabled: false,
+  currentTradingBalance: DEFAULTS.ACCOUNT_BALANCE,
   highWaterMark: null,
   maxDrawdown: null,
 }
@@ -27,6 +28,20 @@ const RiskLimits = () => {
   )
 
   const [activeSection, setActiveSection] = useState('daily')
+
+  // Debounced current trading balance for validation
+  const [debouncedCurrentBalance, setDebouncedCurrentBalance] = useState(
+    settings.currentTradingBalance
+  )
+
+  // Debounce current trading balance for validation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedCurrentBalance(settings.currentTradingBalance)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [settings.currentTradingBalance])
 
   const scrollToSection = (sectionId) => {
     setActiveSection(sectionId)
@@ -42,47 +57,39 @@ const RiskLimits = () => {
     currentDailyLoss: settings.currentDailyLoss,
   })
 
-  // Current trading balance for trailing (separate input)
-  const [currentTradingBalance, setCurrentTradingBalance] = useState(
-    settings.accountBalance || DEFAULTS.ACCOUNT_BALANCE
-  )
 
-  // Auto-update high water mark when current balance increases
+  // Auto-update high water mark only when current balance exceeds it
   const handleCurrentBalanceChange = (newBalance) => {
-    setCurrentTradingBalance(newBalance)
+    updateSetting('currentTradingBalance', newBalance)
 
     if (
       settings.trailingEnabled &&
-      newBalance > (settings.highWaterMark || 0)
+      settings.highWaterMark &&
+      newBalance > settings.highWaterMark
     ) {
       updateSetting('highWaterMark', newBalance)
     }
   }
 
-  // Initialize high water mark when trailing is first enabled
+  // Toggle trailing drawdown without auto-setting high water mark
   const handleTrailingToggle = () => {
-    const newTrailingState = !settings.trailingEnabled
-    updateSetting('trailingEnabled', newTrailingState)
-
-    if (newTrailingState && !settings.highWaterMark) {
-      // Set high water mark to current trading balance when first enabled
-      updateSetting('highWaterMark', currentTradingBalance)
-    }
+    updateSetting('trailingEnabled', !settings.trailingEnabled)
   }
 
   // Trailing drawdown calculations
   const trailingCalc = () => {
     if (
       !settings.trailingEnabled ||
-      !currentTradingBalance ||
-      !settings.maxDrawdown
+      !debouncedCurrentBalance ||
+      !settings.maxDrawdown ||
+      !settings.highWaterMark
     ) {
       return null
     }
 
-    const highWater = settings.highWaterMark || currentTradingBalance
+    const highWater = settings.highWaterMark
     const safeZone = highWater - settings.maxDrawdown
-    const distanceFromDanger = currentTradingBalance - safeZone
+    const distanceFromDanger = debouncedCurrentBalance - safeZone
     const isInDanger = distanceFromDanger <= 0
 
     return {
@@ -441,10 +448,10 @@ const RiskLimits = () => {
                   inputMode='numeric'
                   pattern='[0-9]*'
                   value={
-                    currentTradingBalance === null ||
-                    currentTradingBalance === undefined
+                    settings.currentTradingBalance === null ||
+                    settings.currentTradingBalance === undefined
                       ? ''
-                      : currentTradingBalance
+                      : settings.currentTradingBalance
                   }
                   onChange={(e) =>
                     handleNumericInput(
@@ -494,14 +501,38 @@ const RiskLimits = () => {
                 <label className='block mb-2 text-sm font-medium text-gray-700'>
                   High Water Mark
                 </label>
-                <input
-                  type='number'
-                  value={settings.highWaterMark || ''}
-                  readOnly
-                  className='px-3 py-2 w-full text-gray-500 bg-gray-50 rounded-lg border border-gray-300'
-                />
+                <div className='flex gap-2'>
+                  <input
+                    type='number'
+                    inputMode='numeric'
+                    pattern='[0-9]*'
+                    value={
+                      settings.highWaterMark === null ||
+                      settings.highWaterMark === undefined
+                        ? ''
+                        : settings.highWaterMark
+                    }
+                    onChange={(e) =>
+                      handleNumericInput(
+                        e.target.value,
+                        (value) => updateSetting('highWaterMark', value),
+                        { min: 1 }
+                      )
+                    }
+                    placeholder='Set your high water mark'
+                    className='px-3 py-2 flex-1 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    min='1'
+                  />
+                  <button
+                    onClick={() => updateSetting('highWaterMark', settings.currentTradingBalance)}
+                    className='px-3 py-2 text-sm text-blue-800 bg-blue-100 rounded-lg transition-colors hover:bg-blue-200 whitespace-nowrap'
+                    disabled={!settings.currentTradingBalance}
+                  >
+                    Use Current
+                  </button>
+                </div>
                 <p className='mt-1 text-xs text-gray-500'>
-                  Highest balance reached (auto-updates)
+                  Manually set your highest balance reached
                 </p>
               </div>
             </div>
